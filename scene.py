@@ -66,7 +66,7 @@ class Actor:
                 print("%s lies unconcious..." %self)
                 self.entity.death_save_roll()
             else:
-                print("%s's corpse is still..." %self)
+                print("%s's corpse is motionless..." %self)
                 self.killed = True
         else:
             can_act = True
@@ -139,7 +139,7 @@ class PlayerCharacter(Actor):
             # yeah its bad
             prompt = False
             cmd = input("\nWhat would you like to do on your turn?(-h for help):").lower()
-            if cmd == "-h":
+            if cmd == "-h" or cmd == "help":
                 display_help()
                 prompt = True
             elif cmd == "exit":
@@ -171,20 +171,20 @@ class Sidekick(Actor):
             "sidekick_health": self.get_hp(),
             "damage_dealt": self.damage_dealt + scene.player_character.damage_dealt
         }
-        action_type, rule_strengths = fuzzy.suggest_action(frame)
+        suggested_action, rule_strengths = fuzzy.suggest_action(frame)
 
         if verbose:
             print("%s considers their action carefully..." %self)
             for action_type, strength in rule_strengths:
                 print("%s\t%.2f" %(action_type.name, strength))
 
-        if action_type == fuzzy.action.AGGRESSIVE:
+        if suggested_action == fuzzy.action.AGGRESSIVE:
             self.attack(scene.enemy)
-        elif action_type == fuzzy.action.SUPPORTIVE:
+        elif suggested_action == fuzzy.action.SUPPORTIVE:
             self.harry(scene.enemy)
-        elif action_type == fuzzy.action.DEFENSIVE:
+        elif suggested_action == fuzzy.action.DEFENSIVE:
             self.hinder(scene.enemy)
-        elif action_type == fuzzy.action.SELF_PRESERVE:
+        elif suggested_action == fuzzy.action.SELF_PRESERVE:
             self.dodge()
         else:
             raise("bad action")
@@ -281,7 +281,8 @@ def display_help():
     print("%-12s- disengage from combat, and change positions to FAR. \
         A monster in the NEAR position cannot attack you unless it changes positions." %"disengage")
     print("%-12s - take evasive action, providing yourself DEFENSIVE ADVANTAGE against the next attack before your next turn." %"dodge")
-    print("%-12s - harry the enemy, providing OFFENSIVE ADVANTAGE for the next attack against the target before your next turn." %"harry")
+    print("%-12s - disrupt the enemy's defenses, providing OFFENSIVE ADVANTAGE for the next attack against the target before your next turn." %"harry")
+    print("%-12s - disrupt the enemy's attacks, providing OFFENSIVE DISADVANTAGE for the next attack the enemy makes." %"hinder")
     print("%-12s - Do nothing on this turn." %"wait")
     print("%-12s - stop the simulation." %"exit")
 
@@ -322,9 +323,9 @@ def __gen_sidekick_by_type(monster_type):
 
 def prompt_knowledge():
     print("How knowledgeable should the sidekick be?")
-    print("\t 0 for LOW - the sidekick is guessing at the player's class and the monster's CR")
-    print("\t 1 for PLAYER ONLY - the sidekick knows the player's class, but guesses at the monster's CR")
-    print("\t 2 for ENEMY ONLY - the sidekick is guessing at the player's class, but knows the monster's CR")
+    print("\t 0 for LOW - the sidekick doesn't know the player's class or the monster's CR")
+    print("\t 1 for PLAYER ONLY - the sidekick knows the player's class, but doesn't know the monster's CR")
+    print("\t 2 for ENEMY ONLY - the sidekick doesn't know the player's class, but knows the monster's CR")
     print("\t 3 for HIGH - the sidekick knows both the player's class and monster's CR")
     knowledge = int(input("Sidekick knowledge level:"))
     if knowledge < 0 or knowledge > 3:

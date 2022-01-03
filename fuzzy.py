@@ -24,8 +24,7 @@ class trapezoid_coefficients:
     self.c = c
     self.d = d
 
-player_knowledge = "unknown"
-enemy_knowledge ="unknown"
+
 
 def trapezoid_membership(coefficients: trapezoid_coefficients, value: float):
   if (value > coefficients.d):
@@ -73,8 +72,8 @@ def calculate_membership_value(coefficients, value):
 
 # enemy damage range
 # CR 1/8 = 1 to 13
-#          Expected Value 2.5 to 8.5
-#          Median Expected Value 5.5
+#          Expected Value 3.5 to 8.5
+#          Median Expected Value 6
 # CR 1/4 = 1 to 16
 #          Expected Value 2.5 to 10.5
 #          Median Expected Value 6.5
@@ -104,6 +103,7 @@ membership_fxns = {
       "high": trapezoid_coefficients(17, 20, 28, 28)
     },
   },
+  
   "sidekick_health": {
     "unknown": { # don't know the challenge rating - enemy expected damage ranges from 2.5 to 13
       "low": trapezoid_coefficients(0, 0, 8, 10),
@@ -135,6 +135,7 @@ membership_fxns = {
       "high": trapezoid_coefficients(22, 27, 32, 32)
     },
   },
+
   "damage_dealt": {
     "unknown": { # don't know the challenge rating - enemy HP ranges from 5 to 32
       "low": trapezoid_coefficients(0, 0, 6, 10),
@@ -172,7 +173,7 @@ def godel_s(x,y):
 def lukasiewicz_t(x,y):
   return max(0, x+y-1)
 def lukasiewicz_s(x,y):
-  return max(1, x+y)
+  return min(1, x+y)
 
 def drastic_t(x,y):
   if x == 1:
@@ -227,20 +228,26 @@ def apply_rules(memberships):
   sidekick_health = memberships["sidekick_health"]
 
   rule_strengths = {
-    # IF damage is NOT high OR (player health is low AND sidekick health is low) THEN aggressive
-    action.AGGRESSIVE: goguen_s((1-damage_dealt["high"]), goguen_t(player_health["low"], sidekick_health["low"])),
+    # IF (damage is NOT high AND sidekick health is NOT low) OR (player health is low AND sidekick health is low) THEN aggressive
+    action.AGGRESSIVE: s_norm(t_norm((1-damage_dealt["high"]), (1-sidekick_health["low"])), t_norm(player_health["low"], sidekick_health["low"])),
 
     # IF player health is NOT low AND damage is NOT low THEN supporting
-    action.SUPPORTIVE: goguen_t((1-player_health["low"]), (1-damage_dealt["low"])),
+    action.SUPPORTIVE: t_norm((1-player_health["low"]), (1-damage_dealt["low"])),
 
-    # IF player health is low AND sidekick health is NOT low THEN defensive
-    action.DEFENSIVE: goguen_t(player_health["low"], (1-sidekick_health["low"])),
+    # IF player health is low AND (sidekick health is NOT low OR damage is NOT low) THEN defensive
+    action.DEFENSIVE: t_norm(player_health["low"], s_norm((1-sidekick_health["low"]), (1-damage_dealt["low"]))),
 
     # IF player health is NOT low AND sidekick health is low THEN self-preserve
-    action.SELF_PRESERVE: goguen_t((1-player_health["low"]),sidekick_health["low"])
+    action.SELF_PRESERVE: t_norm((1-player_health["low"]),sidekick_health["low"])
   }
 
   return max(rule_strengths, key=rule_strengths.get), rule_strengths.items()
 
 def suggest_action(frame):
   return apply_rules(calculate_memberships(frame))
+
+player_knowledge = "unknown"
+enemy_knowledge ="unknown"
+
+t_norm = lukasiewicz_t
+s_norm = lukasiewicz_s

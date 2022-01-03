@@ -206,7 +206,7 @@ class Entity:
         return self.name.upper()
     
     def __repr__(self):
-        return "%-15s <HP:%d/%d | AC: %d | to hit: %d | dmg: %dd%d+%d>" %(self, self.current_hp, self.max_hp, 
+        return "%-15s <HP:%2d/%2d | AC: %2d | to hit: %d | dmg: %dd%d+%d>" %(self, self.current_hp, self.max_hp, 
         self.ac, self.hit_modifier, self.damage_dice_amount, self.damage_die, self.damage_modifier)
 
 class Player(Entity):
